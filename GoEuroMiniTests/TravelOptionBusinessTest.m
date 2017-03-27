@@ -33,13 +33,11 @@ static NSString *const KEY_CONTENT_TYPE  = @"Content-Type";
 - (void)setUp {
     [super setUp];
     // Put setup code here. This method is called before the invocation of each test method in the class.
-    webConnectionHandler = [[WebConnectionHandler alloc] init];
     travelOptionBusiness = [[TravelOptionBusiness alloc] init];
 }
 
 - (void)tearDown {
     // Put teardown code here. This method is called after the invocation of each test method in the class.
-    webConnectionHandler = nil;
     travelOptionBusiness = nil;
     [super tearDown];
 }

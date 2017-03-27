@@ -13,17 +13,18 @@
 
 @interface TravelOptionsViewController () <UITableViewDelegate, UITableViewDataSource, TravelModeSelectorDelegate>
 
-@property (weak, nonatomic) IBOutlet UILabel *date;
-@property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (weak, nonatomic) IBOutlet TravelModeSelector *travelModeSelector;
-@property (weak, nonatomic) IBOutlet NSLayoutConstraint *sortSelectorBottomConstraint;
+@property (nonatomic) IBOutlet UILabel *date;
+@property (nonatomic) IBOutlet UITableView *tableView;
+@property (nonatomic) IBOutlet TravelModeSelector *travelModeSelector;
+@property (nonatomic) IBOutlet NSLayoutConstraint *sortSelectorBottomConstraint;
 
+@property (nonatomic) NSArray <TravelOption *>* tableViewDataSource;
+@property (nonatomic) NSArray <TravelOption *>* busList;
+@property (nonatomic) NSArray <TravelOption *>* flightList;
+@property (nonatomic) NSArray <TravelOption *>* trainList;
 @end
 
 @implementation TravelOptionsViewController {
-    NSArray <TravelOption *>* busList;
-    NSArray <TravelOption *>* flightList;
-    NSArray <TravelOption *>* trainList;
 }
 
 - (void)viewDidLoad {
@@ -36,36 +37,41 @@
 }
 
 - (void) fetchAllTravelOptions {
-    for (int i = 0; i < 3; i++) {
-        TravelMode travelMode = (TravelMode)i;
-        [self fetchTravelOptionsForMode:travelMode];
-    }
+    [self fetchFlightOptions];
+    [self fetchBusOptions];
+    [self fetchTrainOptions];
 }
 
-- (void) fetchTravelOptionsForMode:(TravelMode)travelMode
+- (void)fetchFlightOptions
 {
     TravelOptionBusiness *travelOptionBusiness = [[TravelOptionBusiness alloc] init];
-
-    [travelOptionBusiness callTravelApiForMode:travelMode onSuccess:^(NSArray *travelData) {
-        switch (travelMode) {
-            case TravelModeFLIGHT:
-                flightList = travelData;
-                break;
-            case TravelModeTRAIN:
-            {
-                trainList = travelData;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self loadCurrentSelectionData];
-                });}
-                break;
-            case TravelModeBUS:
-                busList = travelData;
-                break;
-            default:
-                break;
-        }
+    [travelOptionBusiness callTravelApiForMode:TravelModeFLIGHT onSuccess:^(NSArray *travelData) {
+        self.flightList = (NSArray *) travelData;
     } onFailure:^(NSError *error) {
-        //Pick from Cache
+        //Failed when even Cache is not there and connection has failed
+    }];
+}
+
+- (void)fetchBusOptions
+{
+    TravelOptionBusiness *travelOptionBusiness = [[TravelOptionBusiness alloc] init];
+    [travelOptionBusiness callTravelApiForMode:TravelModeBUS onSuccess:^(NSArray *travelData) {
+        self.busList = (NSArray *) travelData;
+    } onFailure:^(NSError *error) {
+        //Failed when even Cache is not there and connection has failed
+    }];
+}
+
+- (void)fetchTrainOptions
+{
+    TravelOptionBusiness *travelOptionBusiness = [[TravelOptionBusiness alloc] init];
+    [travelOptionBusiness callTravelApiForMode:TravelModeTRAIN onSuccess:^(NSArray *travelData) {
+        self.trainList = (NSArray *) travelData;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self loadCurrentSelectionData];
+        });
+    } onFailure:^(NSError *error) {
+        //Failed when even Cache is not there and connection has failed
     }];
 }
 
@@ -82,13 +88,13 @@
     NSArray *displayList;
     switch (_travelModeSelector.selectedTravelMode) {
         case TravelModeTRAIN:
-            displayList = trainList;
+            displayList = self.trainList;
             break;
         case TravelModeBUS:
-            displayList = busList;
+            displayList = self.busList;
             break;
         case TravelModeFLIGHT:
-            displayList = flightList;
+            displayList = self.flightList;
             break;
         default:
              displayList = nil;
@@ -96,17 +102,18 @@
     return displayList;
 }
 
+
 - (void) sortedListForSelectedMode:(NSArray *)sortedList
 {
     switch (_travelModeSelector.selectedTravelMode) {
         case TravelModeTRAIN:
-            trainList = sortedList;
+            self.trainList = sortedList;
             break;
         case TravelModeBUS:
-            busList = sortedList;
+            self.busList = sortedList;
             break;
         case TravelModeFLIGHT:
-            flightList = sortedList;
+            self.flightList = sortedList;
             break;
         default:
             nil;
@@ -155,25 +162,32 @@
     UISegmentedControl *segmentedControl = (UISegmentedControl *)sender;
     SortBy sortMode = (SortBy)segmentedControl.selectedSegmentIndex;
     NSArray *currentArray = [self listForSelectedMode];
-    currentArray = [currentArray sortedArrayUsingComparator:^NSComparisonResult(TravelOption *object1, TravelOption *object2){
-        switch (sortMode) {
+    currentArray = [self sortedList:currentArray sortType:sortMode];
+    [self sortedListForSelectedMode:currentArray];
+}
+
+-(NSArray <TravelOption * >*)sortedList:(NSArray <TravelOption * >*)list
+                            sortType:(SortBy)sortType {
+    list = [list sortedArrayUsingComparator:^NSComparisonResult(TravelOption *object1, TravelOption *object2){
+        switch (sortType) {
             case SortByPRICE:
                 return [object1.priceInEuros compare:object2.priceInEuros];
                 break;
-        
+                
             case SortByDURATION:
                 return [object1.duration compare:object2.duration];
                 break;
-            
+                
             case SortByDEPARTURE:
                 return [object1.departureTime compare:object2.departureTime];
                 break;
-            
+                
             default:
                 break;
         }
     }];
-    [self sortedListForSelectedMode:currentArray];
+    
+    return list;
 }
 
 #pragma mark UITableViewDataSource
