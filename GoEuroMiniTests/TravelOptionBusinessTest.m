@@ -57,21 +57,6 @@ static NSString *const KEY_CONTENT_TYPE  = @"Content-Type";
 }
 
 //This one should pass even with no network because of cache
-- (void)testConnection {
-    // This is an example of a functional test case.
-    // Use XCTAssert and related functions to verify your tests produce the correct results.
-    NSString *urlString = [NSString stringWithFormat:@"%@%@", kBaseURL, kFlightAPI];
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:urlString] cachePolicy:NSURLRequestReturnCacheDataDontLoad timeoutInterval: 30];
-    [request setHTTPMethod:REQUEST_TYPE_GET];
-    [request setAllHTTPHeaderFields:[[NSDictionary alloc]initWithObjectsAndKeys:APPLICATION_CONTENT_TYPE_URLENCODED,KEY_CONTENT_TYPE, nil]];
-    [webConnectionHandler executeRequest:request onSuccess:^(NSURLResponse *response, NSData *data) {
-        XCTAssertNotNil(response, "Response is nil");
-    } failure:^(NSURLResponse *response, NSData *data, NSError *error) {
-        XCTAssert("Connection failed");
-    }];
-}
-
-//This one should pass even with no network because of cache
 - (void)testTravelOptionsAPICall {
     [travelOptionBusiness callTravelApiForMode:0 onSuccess:^(NSArray *travelOptions) {
         XCTAssertNotNil(travelOptions, "Response is nil");
