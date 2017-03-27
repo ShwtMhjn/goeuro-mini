@@ -18,7 +18,6 @@
 @property (nonatomic) IBOutlet TravelModeSelector *travelModeSelector;
 @property (nonatomic) IBOutlet NSLayoutConstraint *sortSelectorBottomConstraint;
 
-@property (nonatomic) NSArray <TravelOption *>* tableViewDataSource;
 @property (nonatomic) NSArray <TravelOption *>* busList;
 @property (nonatomic) NSArray <TravelOption *>* flightList;
 @property (nonatomic) NSArray <TravelOption *>* trainList;
